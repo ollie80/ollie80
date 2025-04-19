@@ -33,7 +33,7 @@ text, tspan {white-space: pre;}
 <tspan x="15" y="310">            ╱_  _  _ _ | _  _  _  _  _ _ _ _</tspan>
 <tspan x="15" y="330">                       |                    </tspan>
 <tspan x="15" y="350">                       V F3                  </tspan>
-<tspan x="15" y="370">  ______                 ____             _         </tspan>
+<tspan x="15" y="370" class="key">  ______                 ____             _         </tspan>
 <tspan x="15" y="390" class="key"> |  ____|               |  _ \           | |        </tspan>
 <tspan x="15" y="410" class="key"> | |__  _ __  ___   ___ | |_| | ___    __| | _   _  </tspan>
 <tspan x="15" y="430" class="key"> |  __|| '__|/ _ \ / _ \|  _ / / _ \  / _` || | | | </tspan>
