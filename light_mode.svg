@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" font-family="ConsolasFallback,Consolas,monospace" width="985px" height="530px" font-size="16px">
+<style>
+@font-face {
+src: local('Consolas'), local('Consolas Bold');
+font-family: 'ConsolasFallback';
+font-display: swap;
+-webkit-size-adjust: 109%;
+size-adjust: 109%;
+}
+.key {fill: #8839ef;}
+.value {fill: #7287fd;}
+.addColor {fill: #3fb950;}
+.delColor {fill: #f85149;}
+.cc {fill: #4c4f69;}
+text, tspan {white-space: pre;}
+</style>
+<rect width="985px" height="540px" fill="#e6e9ef" rx="15"/>
+<text x="15" y="30" fill="#c9d1d9" class="ascii">
+<tspan x="15" y="50" class="cc"> Fnet = 0N   __ F2             __ F4      </tspan>
+<tspan x="15" y="70" class="cc">            |╲                  ╱│         </tspan>
+<tspan x="15" y="90"  class="cc">               ╲        ╱ ╲   ╱       ╱     </tspan>
+<tspan x="15" y="110" class="cc">                 ╲    ╱     ╱╲      ╱       </tspan>
+<tspan x="15" y="130" class="cc">                   ╲╱     ╱    ╲  ╱         </tspan>
+<tspan x="15" y="150" class="cc">                  ╱   ╲ ╱       ╱           </tspan>
+<tspan x="15" y="170" class="cc">                ╱     ╱|     ╱              </tspan>
+<tspan x="15" y="190" class="cc">                ╲   ╱  |   ╱                </tspan>
+<tspan x="15" y="210" class="cc">                 ╱╲    | ╱                  </tspan>
+<tspan x="15" y="230" class="cc">               ╱    ╲  ╱                    </tspan>
+<tspan x="15" y="250" class="cc">            |╱      ╱  |                    </tspan>
+<tspan x="15" y="270" class="cc">        F1   ▔    ╱   |                    </tspan>
+<tspan x="15" y="290" class="cc">               ╱       |                    </tspan>
+<tspan x="15" y="310" class="cc">            ╱_  _  _ _ | _  _  _  _  _ _ _ _</tspan>
+<tspan x="15" y="330" class="cc">                       |                    </tspan>
+<tspan x="15" y="350" class="cc">                       V F3                  </tspan>
+<tspan x="15" y="370" class="key">  ______                 ____             _         </tspan>
+<tspan x="15" y="390" class="key"> |  ____|               |  _ \           | |        </tspan>
+<tspan x="15" y="410" class="key"> | |__  _ __  ___   ___ | |_| | ___    __| | _   _  </tspan>
+<tspan x="15" y="430" class="key"> |  __|| '__|/ _ \ / _ \|  _ / / _ \  / _` || | | | </tspan>
+<tspan x="15" y="450" class="key"> | |   | |  |  __/|  __/| |_| | (_) || |_| || |_| | </tspan>
+<tspan x="15" y="470" class="key"> |_|   |_|   \___|\___| |____/ \___/ \___,_| \__, | </tspan>
+<tspan x="15" y="490" class="key">                                             __/  | </tspan>
+<tspan x="15" y="510" class="key">                                             |___/  </tspan>
+</text>
+<text x="460" y="50" fill="#c9d1d9">
+<tspan x="460" y="50" class="key">ollie@80</tspan>
+<tspan x="460" y="65" class="cc">--------</tspan>
+<tspan x="460" y="80" class="cc">. </tspan><tspan class="key">OS</tspan>:<tspan class="cc"> ....................... </tspan><tspan class="value">Windows 10, Ubuntu</tspan>
+<tspan x="460" y="100" class="cc">. </tspan><tspan class="key">Uptime</tspan>:<tspan class="cc" id="age_data_dots"> ............................. </tspan><tspan class="value" id="age_data">16 years</tspan>
+<tspan x="460" y="120" class="cc">. </tspan><tspan class="key">IDE</tspan>:<tspan class="cc"> .......................... </tspan><tspan class="value">VSCode, NeoVIM</tspan>
+
+<tspan x="460" y="140" class="cc">. </tspan><tspan class="key">Languages</tspan>.<tspan class="key">Programming</tspan>:<tspan class="cc"> .... </tspan><tspan class="value">Python, Typescript</tspan>
+<tspan x="460" y="160" class="cc">. </tspan><tspan class="key">Languages</tspan>.<tspan class="key">Computer</tspan>:<tspan class="cc"> .......... </tspan><tspan class="value">HTML, CSS, JSON</tspan>
+<tspan x="460" y="180" class="cc">. </tspan><tspan class="key">Tools</tspan>:<tspan class="cc"> ................ </tspan><tspan class="value">Pygame, ModernGL, Bash</tspan>
+
+<tspan x="460" y="200" class="cc">. </tspan><tspan class="key">Discord</tspan>:<tspan class="cc"> ............................. </tspan><tspan class="value">ollie80</tspan>
+</text>
+</svg>
