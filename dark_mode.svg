@@ -51,7 +51,7 @@ text, tspan {white-space: pre;}
 
 <tspan x="460" y="140" class="cc">. </tspan><tspan class="key">Languages</tspan>.<tspan class="key">Programming</tspan>:<tspan class="cc"> .... </tspan><tspan class="value">Python, Typescript</tspan>
 <tspan x="460" y="160" class="cc">. </tspan><tspan class="key">Languages</tspan>.<tspan class="key">Computer</tspan>:<tspan class="cc"> .......... </tspan><tspan class="value">HTML, CSS, JSON</tspan>
-<tspan x="460" y="180" class="cc">. </tspan><tspan class="key">Tools</tspan>:<tspan class="cc"> ................ </tspan><tspan class="value">Pygame, ModernGL, Bash</tspan>
+<tspan x="460" y="180" class="cc">. </tspan><tspan class="key">Technologies</tspan>:<tspan class="cc"> .... </tspan><tspan class="value">Pygame, OpenGL, Win32, Bash</tspan>
 
 <tspan x="460" y="200" class="cc">. </tspan><tspan class="key">Discord</tspan>:<tspan class="cc"> ............................. </tspan><tspan class="value">ollie80</tspan>
 </text>
