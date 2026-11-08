@@ -1,19 +1,16 @@
-"""Draws the profile's SVGs: the fetch card and the two repo cards, each in
-a dark and a light version.
+"""Draws the profile card, card-dark.svg and card-light.svg.
 
     python build.py [path to FreeBodyEngine]
 
-The mark, colours and font come from the engine (scripts/build_brand.py and
-engine_assets/font/), and the engine's numbers - commits, tests - are read
-from its checkout, so running this again brings them up to date. Text is
-drawn as FreeMono outlines rather than <text>: an SVG shown through <img>
-can't load fonts, so GitHub would fall back to whatever monospace it has.
+The mark's geometry, the colours and the font come from the engine
+(scripts/build_brand.py and engine_assets/font/). The mark is drawn as ASCII
+line art traced from that geometry, so it changes if the logo does. Text is
+FreeMono outlines rather than <text>: an SVG shown through <img> can't load
+fonts, so GitHub would fall back to whatever monospace it has.
 """
 import importlib.util
+import math
 import os
-import re
-import subprocess
-import tempfile
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -32,30 +29,106 @@ FONTS = {
 
 THEMES = {
     "dark": dict(bg="#060e08", edge="#174d2c", title="#d4fff0", key="#5df0a2", value="#8effc8",
-                 dots="#245f3a", muted="#3d8f5c", mark="#8effc8", glow=True,
+                 dots="#245f3a", muted="#3d8f5c", mark="#8effc8", word="#5df0a2", glow=True,
                  swatches=["#0c1a0f", "#174d2c", "#245f3a", "#3d8f5c", "#1cb56a", "#5df0a2", "#8effc8", "#d4fff0"]),
     "light": dict(bg="#f4f9f5", edge="#d5e4d9", title="#0b3d22", key="#1f7a4a", value="#0b3d22",
-                  dots="#b9d1c0", muted="#6c8a76", mark="#0b3d22", glow=False,
+                  dots="#b9d1c0", muted="#6c8a76", mark="#0b3d22", word="#1f7a4a", glow=False,
                   swatches=["#0b3d22", "#14532f", "#1f7a4a", "#2f8f5a", "#3d8f5c", "#6c8a76", "#9db8a5", "#d5e4d9"]),
 }
 
+# The wordmark from the old card, kept as it was.
+WORDMARK = [
+    "  ______                 ____             _",
+    " |  ____|               |  _ \\           | |",
+    " | |__  _ __  ___   ___ | |_| | ___    __| | _   _",
+    " |  __|| '__|/ _ \\ / _ \\|  _ / / _ \\  / _` || | | |",
+    " | |   | |  |  __/|  __/| |_| | (_) || |_| || |_| |",
+    " |_|   |_|   \\___|\\___| |____/ \\___/ \\___,_| \\__, |",
+    "                                             __/  |",
+    "                                             |___/",
+]
 
-# -- facts ------------------------------------------------------------------------
+INFO_SECTIONS = [
+    ("Languages", ["Python · C++ · JavaScript"]),
+    ("Tools", ["OpenGL · Vulkan · WebGL2 · GLFW · SDL2",
+               "pybind11 · NumPy · Pyodide · Git · Neovim"]),
+    ("Projects", ["FreeBodyEngine  game engine · Python + C++",
+                  "FBUSL           my shader language"]),
+]
+INFO_FIELDS = [
+    ("Site", "freebody.dev"),
+    ("Email", "olivermorrison08@outlook.com"),
+]
 
-def engine_facts():
-    """The engine's numbers as of its last commit - what anyone looking at
-    the public repo can see, not whatever's uncommitted locally."""
-    git = lambda *args: subprocess.run(["git", "-C", ENGINE, *args], capture_output=True, text=True).stdout.strip()
-    commits = int(git("rev-list", "--count", "HEAD"))
-    first = git("log", "--reverse", "--format=%ad", "--date=format:%Y").splitlines()[0]
-    with tempfile.TemporaryDirectory() as committed:
-        archive = subprocess.run(["git", "-C", ENGINE, "archive", "HEAD", "tests", "pytest.ini"], capture_output=True, check=True).stdout
-        subprocess.run(["tar", "-x", "-C", committed], input=archive, check=True)
-        collected = subprocess.run([sys.executable, "-m", "pytest", "tests", "--collect-only", "-q", "-p", "no:cacheprovider",
-                                    "--ignore=tests/graphics/test_vulkan.py"], cwd=committed, capture_output=True, text=True).stdout
-    tests = int(re.search(r"(\d+) tests? collected", collected).group(1))
-    # Rounded down: "400+" stays true between runs of this script.
-    return dict(commits=commits, since=first, tests=f"{tests // 100 * 100}+")
+
+# -- the mark as ASCII --------------------------------------------------------------------
+
+def ascii_mark(cols):
+    """The mark as line art, `cols` characters wide. Every edge is traced
+    with characters picked by its angle: edges along the slope climb a row
+    every four columns, which `_.-'` does too, and edges square to it run
+    one column per row, like `\\`. Arrow shafts are single lines and the
+    heads are filled, so they still read as arrows this small."""
+    rows = round(cols * 0.6 / 1.25)  # FreeMono's cells are 0.6 x 1.25em: this keeps it square
+    sx, sy = cols / 32, rows / 32
+    grid = [[" "] * (cols + 2) for _ in range(rows + 2)]
+
+    def put(c, r, ch):
+        if 0 <= r < len(grid) and 0 <= c < len(grid[0]):
+            grid[r][c] = ch
+
+    def edge(a, z):
+        (x0, y0), (x1, y1) = (a[0] * sx, a[1] * sy), (z[0] * sx, z[1] * sy)
+        dx, dy = x1 - x0, y1 - y0
+        if abs(dy) * 2.2 < abs(dx):  # shallow: a character per column, by how high the edge is in it
+            for c in range(math.floor(min(x0, x1)), math.ceil(max(x0, x1))):
+                if min(x0, x1) <= c + 0.5 <= max(x0, x1):
+                    y = y0 + (c + 0.5 - x0) / dx * dy
+                    f = y - math.floor(y)
+                    put(c, math.floor(y), "'" if f < 0.25 else "-" if f < 0.5 else "." if f < 0.75 else "_")
+        else:  # steep: a character per row
+            for r in range(math.floor(min(y0, y1)), math.ceil(max(y0, y1))):
+                if min(y0, y1) <= r + 0.5 <= max(y0, y1):
+                    x = x0 + (r + 0.5 - y0) / dy * dx
+                    lean = dx / dy
+                    put(math.floor(x), r, "|" if abs(lean) < 0.3 else "\\" if lean > 0 else "/")
+
+    def inside(x, y, poly):
+        hit = False
+        for i in range(len(poly)):
+            (x1, y1), (x2, y2) = poly[i], poly[i - 1]
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+                hit = not hit
+        return hit
+
+    # Resting right on the slope: the gap that keeps them apart when the
+    # mark is drawn large only doubles the line here.
+    gap, brand.GAP = brand.GAP, 0.0
+    polygons, (centre, _) = brand.mark_shapes()
+    brand.GAP = gap
+    slope, block, *arrows = polygons
+
+    for poly in (slope, block):
+        for i in range(len(poly)):
+            edge(poly[i - 1], poly[i])
+    for shaft, head in (arrows[0:2], arrows[2:4]):
+        mid = lambda p, q: ((p[0] + q[0]) / 2, (p[1] + q[1]) / 2)
+        edge(mid(shaft[0], shaft[3]), mid(shaft[1], shaft[2]))
+        for r in range(rows + 2):
+            for c in range(cols + 2):
+                if inside((c + 0.5) / sx, (r + 0.5) / sy, head):
+                    put(c, r, "#")
+        for i in range(len(head)):
+            edge(head[i - 1], head[i])
+    put(math.floor(centre[0] * sx) - 1, math.floor(centre[1] * sy), "(")
+    put(math.floor(centre[0] * sx), math.floor(centre[1] * sy), ")")
+
+    lines = ["".join(row).rstrip() for row in grid]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return lines
 
 
 # -- type ---------------------------------------------------------------------------
@@ -89,130 +162,93 @@ class Type:
         self.defs[key] = f'<path id="{key}" d="{"".join(d)}Z"/>' if d else ""
         return key
 
-    def text(self, s, x, baseline, size, fill, weight="r", tracking=0.0):
+    def text(self, s, x, baseline, size, fill, weight="r"):
         """`s` with its first glyph's left edge at x, as <use>s."""
         k = size / self.faces[weight].units_per_EM
         out = []
         for i, ch in enumerate(s):
             if ch != " ":
-                gx = x + i * (self.ADVANCE * size + tracking)
+                gx = x + i * self.ADVANCE * size
                 out.append(f'<use href="#{self._glyph(weight, ch)}" transform="translate({gx:.1f} {baseline:.1f}) scale({k:.4f})"/>')
         return f'<g fill="{fill}">{"".join(out)}</g>'
 
-    def width(self, s, size, tracking=0.0):
-        return len(s) * self.ADVANCE * size + (len(s) - 1) * tracking
+    def block(self, lines, x, top, size, fill, weight="r"):
+        """Lines of text, 1.25em apart - ASCII art's line height."""
+        return "".join(self.text(line, x, top + size + i * size * 1.25, size, fill, weight) for i, line in enumerate(lines))
+
+    def width(self, s, size):
+        return len(s) * self.ADVANCE * size
 
     def defs_svg(self):
         return "".join(v for v in self.defs.values() if v)
 
 
-def svg(width, height, theme, body, type_, extra_defs=""):
-    t = THEMES[theme]
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">'
-            f'<defs>{type_.defs_svg()}{extra_defs}</defs>'
-            f'<rect x="0.5" y="0.5" width="{width - 1}" height="{height - 1}" rx="14" fill="{t["bg"]}" stroke="{t["edge"]}"/>'
-            f'{body}</svg>\n')
+# -- the card --------------------------------------------------------------------------
+
+GLOW = ('<filter id="glow" x="-10%" y="-10%" width="120%" height="120%">'
+        '<feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"/>'
+        '<feComponentTransfer in="blur" result="soft"><feFuncA type="linear" slope="0.8"/></feComponentTransfer>'
+        '<feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
 
 
-def mark(theme, x, y, size):
-    """The FreeBody mark at (x, y), size x size, glowing on dark."""
-    t = THEMES[theme]
-    k = size / 32
-    paths = brand.mark_svg_paths(t["mark"], k, (x, y))
-    if t["glow"]:
-        return f'<g filter="url(#glow)">{paths}</g>', brand.glow_filter(k).removeprefix("<defs>").removesuffix("</defs>")
-    return paths, ""
-
-
-# -- the fetch card --------------------------------------------------------------------
-
-def fetch_card(theme, facts):
+def card(theme):
     t = THEMES[theme]
     type_ = Type()
-    W, H = 985, 440
+    W, H = 985, 585
+    art = 14  # the ASCII art's font size
     body = []
 
-    mark_svg, glow = mark(theme, 58, 52, 270)
-    body.append(mark_svg)
-    word = "FreeBody"
-    body.append(type_.text(word, 193 - type_.width(word, 44) / 2, 392, 44, t["title"], "b"))
+    left = 26
+    mark = type_.block(ascii_mark(52), left, 22, art, t["mark"], "b")
+    word = type_.block(WORDMARK, left, 22 + 24 * art * 1.25, art, t["word"], "b")
+    body.append(f'<g filter="url(#glow)">{mark}{word}</g>' if t["glow"] else mark + word)
 
-    x, size, step = 400, 16, 27
-    body.append(type_.text("ollie@freebody", x, 66, 22, t["title"], "b"))
+    x, size, step = 500, 16, 26
+    # Centred down the card, beside the art.
+    info_height = 62 + sum(step * (1 + len(items)) + 8 for _, items in INFO_SECTIONS) + step * len(INFO_FIELDS) + 20
+    top = (H - info_height) / 2
+    body.append(type_.text("ollie@freebody", x, top + 18, 22, t["title"], "b"))
     # The prompt's cursor, blinking - CSS animations run in an <img>'d SVG.
     cx = x + type_.width("ollie@freebody", 22) + 6
-    body.append(f'<rect class="cursor" x="{cx:.1f}" y="48" width="12" height="22" fill="{t["key"]}"/>')
-    body.append(type_.text("-" * 14, x, 88, 22, t["muted"]))
+    body.append(f'<rect class="cursor" x="{cx:.1f}" y="{top:.1f}" width="12" height="22" fill="{t["key"]}"/>')
+    body.append(type_.text("-" * 14, x, top + 40, 22, t["muted"]))
 
-    rows = [
-        ("Studio", "FreeBody"),
-        ("Engine", "FreeBodyEngine, Python + C++"),
-        ("Renderers", "OpenGL 3.3/4.4 · Vulkan · GLES · WebGL2"),
-        ("Runs on", "desktop · Android · browser · terminal"),
-        ("Shaders", "FBUSL (mine) → GLSL + SPIR-V"),
-        ("Engine stats", f"{facts['commits']} commits · {facts['tests']} tests · since {facts['since']}"),
-        ("Languages", "Python · C++ · FBUSL"),
-        ("Setup", "Arch · Hyprland · Neovim · kitty"),
-        ("Site", "freebody.dev"),
-        ("Discord", "ollie80"),
-    ]
-    label_cols = 16
-    for i, (key, value) in enumerate(rows):
-        baseline = 124 + i * step
+    baseline = top + 80
+    for heading, items in INFO_SECTIONS:
+        body.append(type_.text(heading, x, baseline, size, t["key"], "b"))
+        baseline += step
+        for item in items:
+            body.append(type_.text("  " + item, x, baseline, size, t["value"]))
+            baseline += step
+        baseline += 8
+
+    label_cols = 10
+    for key, value in INFO_FIELDS:
         body.append(type_.text(key, x, baseline, size, t["key"], "b"))
-        dots = " " + "." * (label_cols - len(key) - 2) + " "
-        body.append(type_.text(dots, x + type_.width(key + " ", size) - type_.ADVANCE * size, baseline, size, t["dots"]))
-        body.append(type_.text(value, x + label_cols * type_.ADVANCE * size, baseline, size, t["value"]))
+        dots = "." * (label_cols - len(key) - 2)
+        body.append(type_.text(dots, x + type_.width(key + " ", size), baseline, size, t["dots"]))
+        body.append(type_.text(value, x + type_.width(" " * label_cols, size), baseline, size, t["value"]))
+        baseline += step
 
     # neofetch's colour blocks, in the palette's greens
-    sy = 124 + len(rows) * step - 2
     for i, colour in enumerate(t["swatches"]):
-        body.append(f'<rect x="{x + i * 30}" y="{sy}" width="30" height="16" fill="{colour}"/>')
+        body.append(f'<rect x="{x + i * 30}" y="{baseline + 4}" width="30" height="16" fill="{colour}"/>')
 
     style = ('<style>@keyframes blink{50%{opacity:0}}.cursor{animation:blink 1.1s steps(1) infinite}'
              '@media (prefers-reduced-motion: reduce){.cursor{animation:none}}</style>')
-    return svg(W, H, theme, style + "".join(body), type_, glow)
-
-
-# -- repo cards ---------------------------------------------------------------------------
-
-def repo_card(theme, name, lines, footer):
-    t = THEMES[theme]
-    type_ = Type()
-    W, H = 480, 150
-    body = []
-    mark_svg, glow = mark(theme, 22, 20, 40)
-    body.append(mark_svg)
-    body.append(type_.text(name, 76, 48, 22, t["title"], "b"))
-    for i, line in enumerate(lines):
-        body.append(type_.text(line, 24, 88 + i * 20, 14, t["value"]))
-    body.append(type_.text(footer, 24, 132, 13, t["muted"]))
-    return svg(W, H, theme, "".join(body), type_, glow)
-
-
-REPOS = {
-    "engine": ("FreeBodyEngine",
-               ["A game engine in Python and C++. One codebase",
-                "for OpenGL, Vulkan, Android and the browser."],
-               "Python · C++ · docs.freebody.dev"),
-    "fbusl": ("FBUSL",
-              ["The FreeBody shader language: shaders written",
-               "like Python, compiled to GLSL and SPIR-V."],
-              "Python · transpiler"),
-}
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}">'
+            f'<defs>{type_.defs_svg()}{GLOW if t["glow"] else ""}</defs>{style}'
+            f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="14" fill="{t["bg"]}" stroke="{t["edge"]}"/>'
+            f'{"".join(body)}</svg>\n')
 
 
 def main():
-    facts = engine_facts()
-    print("engine:", facts)
+    print("\n".join(ascii_mark(52)))
     for theme in THEMES:
-        files = {f"card-{theme}.svg": fetch_card(theme, facts)}
-        for key, (name, lines, footer) in REPOS.items():
-            files[f"{key}-{theme}.svg"] = repo_card(theme, name, lines, footer)
-        for filename, content in files.items():
-            with open(os.path.join(HERE, filename), "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"  {filename}  {len(content) / 1024:.0f} KB")
+        content = card(theme)
+        with open(os.path.join(HERE, f"card-{theme}.svg"), "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"  card-{theme}.svg  {len(content) / 1024:.0f} KB")
 
 
 if __name__ == "__main__":
